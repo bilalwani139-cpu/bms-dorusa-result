@@ -3,631 +3,411 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BMS Dorusa - Academic Result Portal</title>
+  <title>BMS Dorusa - Student Result Portal</title>
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase Compatibility Libraries -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <style>
     @media print {
-      body * { visibility: hidden; }
-      #printable-report-card, #printable-report-card * { visibility: visible; }
-      #printable-report-card { position: absolute; left: 0; top: 0; width: 100%; }
+      body * {
+        visibility: hidden;
+      }
+      #printable-report-card, #printable-report-card * {
+        visibility: visible;
+      }
+      #printable-report-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 24px;
+        background: white;
+      }
+      .no-print {
+        display: none !important;
+      }
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
   <!-- Header -->
-  <header class="bg-blue-900 text-white shadow-md sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="bg-amber-400 text-blue-950 font-bold p-2.5 rounded-lg text-xl tracking-wider">
-          <i class="fa-solid fa-graduation-cap"></i>
+  <header class="bg-blue-900 text-white shadow-md no-print">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-white text-blue-900 rounded-full flex items-center justify-center font-bold text-xl shadow">
+          BMS
         </div>
         <div>
-          <h1 class="text-xl md:text-2xl font-black tracking-tight leading-tight uppercase">BMS Dorusa</h1>
+          <h1 class="text-xl font-bold tracking-wide">BMS DORUSA</h1>
           <p class="text-xs text-blue-200">Official Student Evaluation & Result Portal</p>
         </div>
       </div>
-      <div class="flex items-center space-x-2">
-        <button id="enable-notifs-btn" onclick="requestNotificationPermission()" class="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded-full border border-blue-600 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-bell text-amber-300"></i>
-          <span class="hidden sm:inline">Alerts</span>
+      <div class="flex items-center gap-2">
+        <button id="nav-student-btn" onclick="showSection('student')" class="px-4 py-1.5 rounded-lg text-sm font-semibold bg-white text-blue-900 shadow">
+          Student Search
         </button>
-        <button id="nav-toggle" onclick="togglePortal()" class="text-xs bg-amber-400 hover:bg-amber-300 text-blue-950 font-semibold px-3 py-1.5 rounded-full transition">
-          Switch to Faculty Portal
+        <button id="nav-faculty-btn" onclick="showSection('faculty')" class="px-4 py-1.5 rounded-lg text-sm font-semibold bg-blue-800 text-white hover:bg-blue-700">
+          Faculty Portal
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Notification Banner -->
-  <div id="live-alert" class="hidden bg-emerald-600 text-white text-xs px-4 py-2 text-center transition">
-    <i class="fa-solid fa-bullhorn mr-2"></i><span id="live-alert-text">Results have been updated in real-time.</span>
-  </div>
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto p-4 flex-1 w-full">
 
-  <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6">
-    
-    <!-- STUDENT PORTAL INTERFACE -->
-    <section id="student-section" class="space-y-6">
-      
-      <!-- Announcements Marquee / Card -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-        <div class="flex items-center gap-2 text-blue-900 font-bold mb-2 text-sm">
-          <i class="fa-solid fa-bullhorn text-amber-500"></i> Notice Board & Updates
-        </div>
-        <div id="announcement-list" class="space-y-1 text-xs text-slate-600">
-          <p class="border-l-2 border-blue-600 pl-2">Final Term Results are live. Download your verified report card below.</p>
-        </div>
-      </div>
-
-      <!-- Search Card -->
-      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 text-center max-w-xl mx-auto">
-        <h2 class="text-xl font-bold text-slate-800">Check Your Term Results</h2>
-        <p class="text-sm text-slate-500 mt-1">Enter your Roll Number to inspect your marksheet and generate an official report card.</p>
+    <!-- STUDENT SECTION -->
+    <section id="section-student" class="no-print">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-xl mx-auto mt-6">
+        <h2 class="text-lg font-bold text-slate-800 text-center mb-4">Search Annual Results</h2>
         
-        <form onsubmit="searchResult(event)" class="mt-6 flex flex-col sm:flex-row gap-2">
-          <input id="search-roll" type="text" placeholder="Enter Roll Number (e.g. 101, 102)" required
-            class="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-800 text-center sm:text-left text-sm font-semibold uppercase">
-          <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-6 py-3 rounded-lg transition text-sm">
-            Search
+        <form onsubmit="handleStudentSearch(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Select Class</label>
+            <select id="search-class" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 outline-none">
+              <option value="">-- Choose Class --</option>
+              <option value="3">Class 3rd</option>
+              <option value="4">Class 4th</option>
+              <option value="5">Class 5th</option>
+              <option value="6">Class 6th</option>
+              <option value="7">Class 7th</option>
+              <option value="8">Class 8th</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Roll Number</label>
+            <input id="search-roll" type="text" placeholder="e.g. 101" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 outline-none">
+          </div>
+
+          <button type="submit" id="search-btn" class="w-full bg-blue-800 hover:bg-blue-900 text-white font-semibold py-2.5 rounded-lg text-sm shadow transition">
+            Check Result
           </button>
         </form>
+
+        <p id="search-error" class="hidden mt-4 text-center text-sm font-medium text-red-600"></p>
       </div>
 
-      <!-- Result View (Hidden until searched) -->
-      <div id="result-container" class="hidden max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+      <!-- Result Card Display -->
+      <div id="result-display" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto mt-6 space-y-6">
+        <div class="border-b pb-4 flex justify-between items-start">
           <div>
-            <h3 id="res-student-name" class="text-lg font-bold">Student Name</h3>
-            <p class="text-xs text-slate-300">Roll No: <span id="res-roll" class="font-mono">---</span> | Class: <span id="res-class">---</span></p>
+            <h3 id="res-name" class="text-xl font-bold text-slate-800">---</h3>
+            <p class="text-xs text-slate-500">Father's Name: <span id="res-parent" class="font-semibold text-slate-700">---</span></p>
           </div>
-          <div id="res-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500 text-white">
-            Passed
+          <div class="text-right text-xs">
+            <span class="inline-block px-2.5 py-1 bg-blue-100 text-blue-800 rounded font-bold">Class <span id="res-class">---</span></span>
+            <p class="text-slate-500 mt-1">Roll No: <span id="res-roll" class="font-semibold text-slate-700">---</span></p>
+          </div>
+        </div>
+
+        <!-- Marks Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border-collapse border border-slate-200">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+              <tr>
+                <th class="p-2.5 border border-slate-200">Subject</th>
+                <th class="p-2.5 border border-slate-200 text-center">Maximum Marks</th>
+                <th class="p-2.5 border border-slate-200 text-center">Marks Obtained</th>
+              </tr>
+            </thead>
+            <tbody id="res-marks-rows">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totals & Performance -->
+        <div class="grid grid-cols-3 gap-3 text-center bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Total</p>
+            <p id="res-total" class="text-base font-bold text-slate-800 mt-0.5">---</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Percentage</p>
+            <p id="res-percent" class="text-base font-bold text-slate-800 mt-0.5">---</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Result</p>
+            <p id="res-status" class="text-base font-bold text-emerald-600 mt-0.5">PASS</p>
           </div>
         </div>
 
-        <div class="p-6">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
-                <tr>
-                  <th class="py-3 px-4">Subject</th>
-                  <th class="py-3 px-4 text-center">Max Marks</th>
-                  <th class="py-3 px-4 text-center">Marks Obtained</th>
-                  <th class="py-3 px-4 text-center">Grade</th>
-                </tr>
-              </thead>
-              <tbody id="res-marks-tbody" class="divide-y divide-slate-100">
-                <!-- Injected via JS -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Summary Metric Cards -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6 pt-4 border-t border-slate-100">
-            <div class="bg-slate-50 p-3 rounded-lg text-center">
-              <span class="text-xs text-slate-500 block">Total Marks</span>
-              <span id="res-total" class="text-base font-bold text-slate-800">0 / 500</span>
-            </div>
-            <div class="bg-slate-50 p-3 rounded-lg text-center">
-              <span class="text-xs text-slate-500 block">Percentage</span>
-              <span id="res-percentage" class="text-base font-bold text-blue-900">0%</span>
-            </div>
-            <div class="bg-slate-50 p-3 rounded-lg text-center col-span-2 sm:col-span-1">
-              <span class="text-xs text-slate-500 block">Overall Grade</span>
-              <span id="res-overall-grade" class="text-base font-bold text-amber-600">--</span>
-            </div>
-          </div>
-
-          <div class="mt-6 flex justify-end">
-            <button onclick="triggerPrintReportCard()" class="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 text-blue-950 font-bold px-5 py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow">
-              <i class="fa-solid fa-file-arrow-down"></i> Download Report Card (PDF)
-            </button>
-          </div>
-        </div>
+        <button onclick="window.print()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg text-sm shadow flex items-center justify-center gap-2">
+          <span>🖨️</span> Download / Print Report Card
+        </button>
       </div>
     </section>
 
-    <!-- TEACHER / FACULTY PORTAL INTERFACE -->
-    <section id="faculty-section" class="hidden space-y-6">
+    <!-- FACULTY SECTION -->
+    <section id="section-faculty" class="hidden no-print">
       
-      <!-- Faculty Login Card -->
-      <div id="faculty-login-card" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-lg font-bold text-slate-800 mb-1">Faculty Authentication</h2>
-        <p class="text-xs text-slate-500 mb-4">Authorized access for BMS Dorusa teachers only.</p>
+      <!-- Login Box -->
+      <div id="faculty-auth-card" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-md mx-auto mt-6">
+        <h2 class="text-lg font-bold text-slate-800 text-center mb-1">Faculty Portal Login</h2>
+        <p class="text-xs text-slate-500 text-center mb-5">Authorized Teachers & Administrators Only</p>
         
         <form onsubmit="handleFacultyLogin(event)" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Teacher Email or ID</label>
-            <input id="faculty-id" type="text" required placeholder="admin@bmsdorusa.edu"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-800 focus:outline-none">
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Email Address</label>
+            <input id="login-email" type="email" required placeholder="teacher@bmsdorusa.com" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-600">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-            <input id="faculty-pass" type="password" required placeholder="••••••••"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-800 focus:outline-none">
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Password</label>
+            <input id="login-password" type="password" required placeholder="••••••••" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-600">
           </div>
-          <button type="submit" class="w-full bg-blue-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-blue-800 transition">
-            Sign In to Faculty Dashboard
+          <button type="submit" id="login-btn" class="w-full bg-blue-800 hover:bg-blue-900 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
+            Sign In
           </button>
-          
         </form>
+        <p id="login-error" class="hidden mt-3 text-center text-xs font-semibold text-red-600"></p>
       </div>
 
-      <!-- Faculty Management Dashboard -->
-      <div id="faculty-dashboard" class="hidden space-y-6">
-        
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 gap-3">
+      <!-- Entry Form (Shown after login) -->
+      <div id="faculty-entry-card" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto mt-4 space-y-5">
+        <div class="flex justify-between items-center border-b pb-3">
           <div>
-            <h2 class="text-base font-bold text-slate-800">Faculty Grade Entry & Management</h2>
-            <p class="text-xs text-slate-500">Live cloud sync enabled for BMS Dorusa student records.</p>
+            <h2 class="text-lg font-bold text-slate-800">Upload Student Marks</h2>
+            <p class="text-xs text-slate-500">Record will persist securely in the cloud</p>
           </div>
-          <div class="flex gap-2 w-full sm:w-auto">
-            <button onclick="openNoticeModal()" class="flex-1 sm:flex-initial text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold">
-              <i class="fa-solid fa-bullhorn mr-1"></i> Post Announcement
-            </button>
-            <button onclick="handleFacultyLogout()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-2 rounded-lg font-semibold">
-              <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Logout
-            </button>
-          </div>
+          <button onclick="handleFacultyLogout()" class="text-xs text-red-600 font-semibold hover:underline">
+            Log Out
+          </button>
         </div>
 
-        <!-- Add/Edit Grade Form -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-800 mb-3" id="form-heading">Record New Student Marks</h3>
-          
-          <form onsubmit="saveMarks(event)" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div class="col-span-2 md:col-span-1">
-              <label class="block font-semibold mb-1 text-slate-600">Roll Number</label>
-              <input id="inp-roll" type="text" required placeholder="e.g. 101" class="w-full p-2 border rounded border-slate-300">
-            </div>
-            <div class="col-span-2 md:col-span-2">
-              <label class="block font-semibold mb-1 text-slate-600">Student Name</label>
-              <input id="inp-name" type="text" required placeholder="Student Full Name" class="w-full p-2 border rounded border-slate-300">
-            </div>
-            <div class="col-span-2 md:col-span-1">
-              <label class="block font-semibold mb-1 text-slate-600">Class / Grade</label>
-              <input id="inp-class" type="text" required placeholder="8th" class="w-full p-2 border rounded border-slate-300">
-            </div>
-
-            <!-- Subject Inputs -->
+        <form onsubmit="handleSaveResult(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="block font-semibold mb-1 text-slate-600">English (100)</label>
-              <input id="sub-english" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Class *</label>
+              <select id="entry-class" onchange="toggleScienceField()" required class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-600">
+                <option value="">Choose</option>
+                <option value="3">Class 3rd</option>
+                <option value="4">Class 4th</option>
+                <option value="5">Class 5th</option>
+                <option value="6">Class 6th</option>
+                <option value="7">Class 7th</option>
+                <option value="8">Class 8th</option>
+              </select>
             </div>
             <div>
-              <label class="block font-semibold mb-1 text-slate-600">Mathematics (100)</label>
-              <input id="sub-math" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Roll Number *</label>
+              <input id="entry-roll" type="text" placeholder="e.g. 101" required class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-600">
             </div>
             <div>
-              <label class="block font-semibold mb-1 text-slate-600">Science (100)</label>
-              <input id="sub-science" type="number" min="0" max="100" class="w-full p-2 border rounded border-slate-300">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Student Name *</label>
+              <input id="entry-name" type="text" placeholder="Full Name" required class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-600">
             </div>
-            <div>
-              <label class="block font-semibold mb-1 text-slate-600">Social Studies (100)</label>
-              <input id="sub-social" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300">
-            </div>
-            <div>
-              <label class="block font-semibold mb-1 text-slate-600">Urdu / Regional (100)</label>
-              <input id="sub-urdu" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300">
-            </div>
-            <div>
-  <label class="block font-semibold mb-1 text-slate-600">Kashmiri (100)</label>
-  <input id="sub-kashmiri" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300">
-</div>
-            <div class="col-span-2 md:col-span-3 flex items-end">
-              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded transition">
-                <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Save & Broadcast Live Result
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Grade Master Roster Table -->
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-            <h4 class="text-sm font-bold text-slate-800">Declared Students Database</h4>
-            <span id="record-count" class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600 font-mono">2 records</span>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-600 uppercase border-b">
-                <tr>
-                  <th class="p-3">Roll</th>
-                  <th class="p-3">Name</th>
-                  <th class="p-3">Class</th>
-                  <th class="p-3">Total (/500)</th>
-                  <th class="p-3">%</th>
-                  <th class="p-3">Status</th>
-                  <th class="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="faculty-roster-tbody" class="divide-y divide-slate-100">
-                <!-- Injected via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
 
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Parentage / Father's Name *</label>
+            <input id="entry-parent" type="text" placeholder="Father's Name" required class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-600">
+          </div>
+
+          <!-- Subjects Grid -->
+          <div class="pt-2">
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Subject Marks (Max: 100 each)</label>
+              <span id="subject-count-badge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">6 Subjects (600 Marks)</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">English *</label>
+                <input id="sub-english" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">Mathematics *</label>
+                <input id="sub-math" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">Urdu *</label>
+                <input id="sub-urdu" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">Social Studies *</label>
+                <input id="sub-social" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">Kashmiri *</label>
+                <input id="sub-kashmiri" type="number" min="0" max="100" required class="w-full p-2 border rounded border-slate-300 text-sm">
+              </div>
+              
+              <!-- Science Input: Automatically hidden for 3rd, 4th, 5th -->
+              <div id="wrapper-science">
+                <label class="block text-xs text-slate-500 mb-0.5">Science *</label>
+                <input id="sub-science" type="number" min="0" max="100" class="w-full p-2 border rounded border-slate-300 text-sm">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="save-btn" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 rounded-lg text-sm shadow transition">
+            Save & Publish Result
+          </button>
+        </form>
+
+        <p id="save-feedback" class="hidden text-center text-sm font-semibold"></p>
       </div>
 
     </section>
 
   </main>
 
-  <!-- PRINTABLE OFFICIAL REPORT CARD (Rendered on Demand) -->
-  <div id="printable-report-card" class="p-10 max-w-2xl mx-auto border-4 border-double border-blue-950 bg-white hidden print:block">
-    <div class="text-center border-b-2 border-blue-950 pb-4 mb-4">
-      <h1 class="text-3xl font-black text-blue-950 uppercase tracking-wide">BMS DORUSA</h1>
-      <p class="text-xs uppercase tracking-widest text-slate-600 mt-1">Official Student Cumulative Record & Progress Report</p>
-      <p class="text-[10px] text-slate-400">Accredited Academic Evaluation Record</p>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 text-xs mb-6">
-      <div><strong>Student Name:</strong> <span id="print-name">---</span></div>
-      <div><strong>Roll No:</strong> <span id="print-roll">---</span></div>
-      <div><strong>Class:</strong> <span id="print-class">---</span></div>
-      <div><strong>Academic Session:</strong> 2026</div>
-    </div>
-
-    <table class="w-full text-xs text-left border-collapse border border-slate-400 mb-6">
-      <thead>
-        <tr class="bg-slate-100">
-          <th class="border border-slate-400 p-2">Subject</th>
-          <th class="border border-slate-400 p-2 text-center">Max Marks</th>
-          <th class="border border-slate-400 p-2 text-center">Marks Awarded</th>
-          <th class="border border-slate-400 p-2 text-center">Grade</th>
-        </tr>
-      </thead>
-      <tbody id="print-tbody">
-        <!-- Rendered before print -->
-      </tbody>
-    </table>
-
-    <div class="grid grid-cols-3 gap-2 text-xs border border-slate-400 p-3 mb-10 text-center bg-slate-50">
-      <div><strong>Total:</strong> <span id="print-total">---</span>  / <span id="print-max">500</span></div>
-      <div><strong>Percentage:</strong> <span id="print-percent">---</span>%</div>
-      <div><strong>Final Verdict:</strong> <span id="print-status">PASS</span></div>
-    </div>
-
-    <div class="flex justify-between text-center pt-8 text-xs font-semibold text-slate-700">
-      <div>
-        <div class="border-t border-slate-600 w-32 mb-1"></div>
-        Class Teacher
+  <!-- PRINTABLE REPORT CARD (Visible ONLY during print/PDF generation) -->
+  <div id="printable-report-card" class="hidden font-serif text-slate-900">
+    <div class="border-4 border-double border-slate-800 p-8 max-w-3xl mx-auto bg-white">
+      <!-- School Header -->
+      <div class="text-center border-b-2 border-slate-800 pb-4 mb-6">
+        <h1 class="text-2xl font-bold tracking-wider uppercase">Govt. Boys Middle School Dorusa</h1>
+        <p class="text-sm font-sans tracking-wide uppercase text-slate-600">Annual Academic Progress Report</p>
       </div>
-      <div>
-        <div class="border-t border-slate-600 w-32 mb-1"></div>
-        Headmaster / Principal
+
+      <!-- Student Particulars -->
+      <div class="grid grid-cols-2 gap-4 text-sm mb-6 border border-slate-400 p-4 bg-slate-50">
+        <div><strong>Student Name:</strong> <span id="print-name">---</span></div>
+        <div><strong>Class:</strong> <span id="print-class">---</span></div>
+        <div><strong>Father's Name:</strong> <span id="print-parent">---</span></div>
+        <div><strong>Roll Number:</strong> <span id="print-roll">---</span></div>
+      </div>
+
+      <!-- Marks Sheet Table -->
+      <table class="w-full text-sm border-collapse border border-slate-500 mb-6">
+        <thead>
+          <tr class="bg-slate-200">
+            <th class="border border-slate-500 p-2 text-left">Subject</th>
+            <th class="border border-slate-500 p-2 text-center w-32">Maximum Marks</th>
+            <th class="border border-slate-500 p-2 text-center w-32">Marks Obtained</th>
+          </tr>
+        </thead>
+        <tbody id="print-marks-rows">
+          <!-- Dynamically populated rows based on student subjects -->
+        </tbody>
+      </table>
+
+      <!-- Grand Total Summary (Dynamic 500 or 600) -->
+      <div class="grid grid-cols-3 gap-2 text-xs border border-slate-400 p-3 mb-12 text-center bg-slate-50">
+        <div><strong>Total:</strong> <span id="print-total">---</span> / <span id="print-max">600</span></div>
+        <div><strong>Percentage:</strong> <span id="print-percent">---</span>%</div>
+        <div><strong>Verdict:</strong> <span id="print-status">PASS</span></div>
+      </div>
+
+      <!-- Signatures Footer -->
+      <div class="flex justify-between items-end pt-12 text-xs text-center font-sans">
+        <div class="w-40 border-t border-slate-700 pt-1 font-semibold">Class Teacher</div>
+        <div class="w-40 border-t border-slate-700 pt-1 font-semibold">Checker / Evaluation</div>
+        <div class="w-40 border-t border-slate-700 pt-1 font-semibold">Headmaster Seal</div>
       </div>
     </div>
   </div>
 
-  <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center border-t border-slate-800">
-    <p>© 2026 BMS Dorusa. Secured with Encrypted Cloud Datastore.</p>
-  </footer>
-
-  <!-- Application Logic -->
-  <!-- Firebase SDKs -->
-<!-- Complete BMS Dorusa Cloud Engine -->
-  <!-- Complete BMS Dorusa Cloud Engine -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword, 
-      signOut 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      getDoc, 
-      setDoc, 
-      deleteDoc, 
-      collection, 
-      onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // Your BMS Dorusa Firebase Cloud Configuration
+  <!-- SCRIPT & FIREBASE LOGIC -->
+  <script>
+    // --- FIREBASE CONFIGURATION ---
+    // Make sure your exact API key and info are inside here before saving!
     const firebaseConfig = {
-      apiKey: "AIzaSyCEcOlPR6pRS3wzgNBiZ2dIZ8mf8UwuSco",
+      apiKey: "YOUR_API_KEY",
       authDomain: "bms-dorusa-portal-af2b3.firebaseapp.com",
       projectId: "bms-dorusa-portal-af2b3",
-      storageBucket: "bms-dorusa-portal-af2b3.firebasestorage.app",
-      messagingSenderId: "175754849348",
-      appId: "1:175754849348:web:ca96274a0f00fe9a326011",
-      measurementId: "G-61NKV1JVS7"
+      storageBucket: "bms-dorusa-portal-af2b3.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    const SUBJECTS = ["English", "Mathematics", "Science", "Social Studies", "Urdu", "Kashmiri"];
-    let currentStudents = {};
+    let currentStudent = null;
 
-    // 1. Live Sync from Cloud Firestore
-    onSnapshot(collection(db, "results"), (snapshot) => {
-      currentStudents = {};
-      snapshot.forEach((doc) => {
-        currentStudents[doc.id] = doc.data();
-      });
-      renderFacultyRoster();
-    });
+    // --- NAVIGATION LOGIC ---
+    function showSection(section) {
+      const studentSec = document.getElementById('section-student');
+      const facultySec = document.getElementById('section-faculty');
+      const studentBtn = document.getElementById('nav-student-btn');
+      const facultyBtn = document.getElementById('nav-faculty-btn');
 
-    // 2. Portal Toggle Button
-    window.togglePortal = function() {
-      const studentSec = document.getElementById('student-section');
-      const facultySec = document.getElementById('faculty-section');
-      const toggleBtn = document.getElementById('nav-toggle');
-
-      if (facultySec.classList.contains('hidden')) {
-        studentSec.classList.add('hidden');
-        facultySec.classList.remove('hidden');
-        toggleBtn.textContent = 'Switch to Student Portal';
-        renderFacultyRoster();
-      } else {
+      if (section === 'student') {
         studentSec.classList.remove('hidden');
         facultySec.classList.add('hidden');
-        toggleBtn.textContent = 'Switch to Faculty Portal';
+        studentBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold bg-white text-blue-900 shadow";
+        facultyBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold bg-blue-800 text-white hover:bg-blue-700";
+      } else {
+        studentSec.classList.add('hidden');
+        facultySec.classList.remove('hidden');
+        facultyBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold bg-white text-blue-900 shadow";
+        studentBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold bg-blue-800 text-white hover:bg-blue-700";
       }
-    };
+    }
 
-    // 3. Faculty Sign-In
-    window.handleFacultyLogin = async function(e) {
+    // --- SCIENCE TOGGLE FOR CLASS 3, 4, 5 ---
+    function toggleScienceField() {
+      const selectedClass = document.getElementById('entry-class').value;
+      const scienceWrapper = document.getElementById('wrapper-science');
+      const scienceInput = document.getElementById('sub-science');
+      const badge = document.getElementById('subject-count-badge');
+
+      if (['3', '4', '5'].includes(selectedClass)) {
+        // Hide Science & remove required
+        scienceWrapper.style.display = 'none';
+        scienceInput.removeAttribute('required');
+        scienceInput.value = '';
+        badge.textContent = "5 Subjects (500 Marks)";
+        badge.className = "text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium";
+      } else {
+        // Show Science for Class 6, 7, 8
+        scienceWrapper.style.display = 'block';
+        scienceInput.setAttribute('required', 'required');
+        badge.textContent = "6 Subjects (600 Marks)";
+        badge.className = "text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium";
+      }
+    }
+
+    // --- STUDENT SEARCH HANDLER ---
+    async function handleStudentSearch(e) {
       e.preventDefault();
-      const email = document.getElementById('faculty-id').value.trim();
-      const password = document.getElementById('faculty-pass').value.trim();
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        document.getElementById('faculty-login-card').classList.add('hidden');
-        document.getElementById('faculty-dashboard').classList.remove('hidden');
-        renderFacultyRoster();
-      } catch (err) {
-        alert("Login failed: " + err.message);
-      }
-    };
-
-    // 4. Faculty Sign-Out
-    window.handleFacultyLogout = async function() {
-      await signOut(auth);
-      document.getElementById('faculty-dashboard').classList.add('hidden');
-      document.getElementById('faculty-login-card').classList.remove('hidden');
-    };
-
-    // 5. Save or Update Marks in Cloud
-    window.saveMarks = async function(e) {
-      e.preventDefault();
-      const roll = document.getElementById('inp-roll').value.trim();
-      const name = document.getElementById('inp-name').value.trim();
-      const studentClass = document.getElementById('inp-class').value.trim();
-
-      // 1. Create the marks object with common subjects
-const marks = {
-  English: Number(document.getElementById('sub-english')?.value || 0),
-  Mathematics: Number(document.getElementById('sub-math')?.value || 0),
-  "Social Studies": Number(document.getElementById('sub-social')?.value || 0),
-  Urdu: Number(document.getElementById('sub-urdu')?.value || 0)
-};
-
-// 2. Include Kashmiri only if the input exists in your form
-const kashmiriInput = document.getElementById('sub-kashmiri');
-if (kashmiriInput && kashmiriInput.value !== '') {
-  marks.Kashmiri = Number(kashmiriInput.value || 0);
-}
-
-// 3. Only add Science if the class is NOT 3, 4, or 5
-const cleanClass = studentClass.replace(/[^0-9]/g, ''); // Turns "Class 3rd" or "3rd" into "3"
-if (!['3', '4', '5'].includes(cleanClass)) {
-  marks.Science = Number(document.getElementById('sub-science')?.value || 0);
-}
-      
-
-      try {
-        await setDoc(doc(db, "results", roll), { roll, name, class: studentClass, marks });
-        e.target.reset();
-        alert(`Marks saved for ${name} (Roll: ${roll})`);
-      } catch (err) {
-        alert("Error saving: " + err.message);
-      }
-    };
-
-    // 6. Edit Student (Pencil Icon)
-    window.editStudent = function(roll) {
-      const s = currentStudents[roll];
-      if (!s) return;
-
-      document.getElementById('inp-roll').value = s.roll || roll;
-      document.getElementById('inp-name').value = s.name || '';
-      document.getElementById('inp-class').value = s.class || '';
-
-      const m = s.marks || {};
-      document.getElementById('sub-english').value = m.English !== undefined ? m.English : '';
-      document.getElementById('sub-math').value = m.Mathematics !== undefined ? m.Mathematics : '';
-      document.getElementById('sub-science').value = m.Science !== undefined ? m.Science : '';
-      document.getElementById('sub-social').value = m["Social Studies"] !== undefined ? m["Social Studies"] : '';
-      document.getElementById('sub-urdu').value = m.Urdu !== undefined ? m.Urdu : '';
-      document.getElementById('sub-kashmiri').value = m.Kashmiri !== undefined ? m.Kashmiri : '';
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    // 7. Delete Student (Trash Icon)
-    window.deleteStudentCloud = async function(roll) {
-      if (confirm(`Delete result record for Roll ${roll}?`)) {
-        await deleteDoc(doc(db, "results", roll));
-      }
-    };
-
-    // 8. Search Student & Generate Printable Report Card
-    window.searchResult = async function(e) {
-      e.preventDefault();
+      const cls = document.getElementById('search-class').value;
       const roll = document.getElementById('search-roll').value.trim();
-      const docRef = doc(db, "results", roll);
-      const docSnap = await getDoc(docRef);
+      const errBox = document.getElementById('search-error');
+      const resDisplay = document.getElementById('result-display');
+      const searchBtn = document.getElementById('search-btn');
 
-      const container = document.getElementById('result-container');
-      if (!docSnap.exists()) {
-        alert(`No results found for Roll Number: ${roll}`);
-        container.classList.add('hidden');
-        return;
+      errBox.classList.add('hidden');
+      resDisplay.classList.add('hidden');
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Searching...';
+
+      try {
+        const docRef = db.collection('results').doc(`${cls}_${roll}`);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+          errBox.textContent = `No result found for Class ${cls}, Roll No ${roll}. Please verify details.`;
+          errBox.classList.remove('hidden');
+        } else {
+          currentStudent = docSnap.data();
+          populateResultDisplay(currentStudent);
+          populatePrintableReportCard(currentStudent);
+          resDisplay.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error(err);
+        errBox.textContent = "Network error. Please check your internet connection.";
+        errBox.classList.remove('hidden');
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Check Result';
       }
-
-      const student = docSnap.data();
-      window.currentViewedStudent = student;
-      const stats = computeStats(student.marks || {});
-
-      // On-Screen Summary
-      document.getElementById('res-student-name').textContent = student.name;
-      document.getElementById('res-roll').textContent = student.roll;
-      document.getElementById('res-class').textContent = student.class;
-      document.getElementById('res-total').textContent = `${stats.total} / ${SUBJECTS.length * 100}`;
-      document.getElementById('res-percentage').textContent = `${stats.percentage}%`;
-      document.getElementById('res-overall-grade').textContent = stats.grade;
-
-      const badge = document.getElementById('res-status-badge');
-      if (stats.isPass) {
-        badge.textContent = "PASSED";
-        badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500 text-white";
-      } else {
-        badge.textContent = "NEEDS RE-EVALUATION";
-        badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500 text-white";
-      }
-
-      // Populate On-Screen Table
-      const resTbody = document.getElementById('res-marks-tbody');
-      resTbody.innerHTML = '';
-      SUBJECTS.forEach(sub => {
-        const score = student.marks && student.marks[sub] !== undefined ? student.marks[sub] : 0;
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50";
-        tr.innerHTML = `
-          <td class="py-2.5 px-4 font-medium text-slate-700">${sub}</td>
-          <td class="py-2.5 px-4 text-center text-slate-400">100</td>
-          <td class="py-2.5 px-4 text-center font-bold text-slate-800">${score}</td>
-          <td class="py-2.5 px-4 text-center font-semibold text-blue-900">${calculateGrade(score)}</td>
-        `;
-        resTbody.appendChild(tr);
-      });
-      container.classList.remove('hidden');
-
-      // Populate Printable PDF Elements
-            document.getElementById('print-name').textContent = student.name;
-      document.getElementById('print-roll').textContent = student.roll;
-      document.getElementById('print-class').textContent = student.class;
-
-      // 1. Detect if the student is in Class 3, 4, or 5
-      const cleanClass = String(student.class || '').replace(/[^0-9]/g, '');
-      const isJuniorClass = ['3', '4', '5'].includes(cleanClass);
-
-      // 2. Hide Science for junior classes only
-      const activeSubjects = SUBJECTS.filter(sub => !(isJuniorClass && sub.toLowerCase().includes('science')));
-
-      // 3. Calculate dynamic total and percentage (out of 400 or 500)
-      let calculatedTotal = 0;
-      activeSubjects.forEach(sub => {
-        calculatedTotal += Number(student.marks && student.marks[sub] !== undefined ? student.marks[sub] : 0);
-      });
-      const maxMarks = activeSubjects.length * 100;
-      const calculatedPercentage = ((calculatedTotal / maxMarks) * 100).toFixed(1);
-
-      // 4. Update the summary display
-      const printMaxElem = document.getElementById('print-max');
-      if (printMaxElem) {
-        document.getElementById('print-total').textContent = calculatedTotal;
-        printMaxElem.textContent = maxMarks;
-      } else {
-        document.getElementById('print-total').textContent = `${calculatedTotal} / ${maxMarks}`;
-      }
-
-      document.getElementById('print-percent').textContent = calculatedPercentage;
-      document.getElementById('print-status').textContent = (calculatedPercentage >= 33) ? 'PROMOTED / PASS' : 'NEEDS RE-EXAM';
-
-      // 5. Populate only the active subjects into the table
-      const printTbody = document.getElementById('print-tbody');
-      printTbody.innerHTML = '';
-      activeSubjects.forEach(sub => {
-        const score = student.marks && student.marks[sub] !== undefined ? student.marks[sub] : 0;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="border border-slate-400 p-2 font-medium">${sub}</td>
-          <td class="border border-slate-400 p-2 text-center">100</td>
-          <td class="border border-slate-400 p-2 text-center font-bold">${score}</td>
-          <td class="border border-slate-400 p-2 text-center">${calculateGrade(score)}</td>
-        `;
-        printTbody.appendChild(tr);
-      });
-    };
-    
-
-    // 9. Trigger PDF Print
-    window.triggerPrintReportCard = function() {
-      if (!window.currentViewedStudent) {
-        alert("Please search for a student first.");
-        return;
-      }
-      window.print();
-    };
-
-    // 10. Grade & Percent Computations
-    function calculateGrade(score) {
-      if (score >= 90) return 'A+';
-      if (score >= 80) return 'A';
-      if (score >= 70) return 'B';
-      if (score >= 60) return 'C';
-      if (score >= 40) return 'D';
-      return 'E (Fail)';
     }
 
-    function computeStats(marks) {
-      let total = 0;
-      let allPass = true;
-      SUBJECTS.forEach(sub => {
-        const val = Number(marks[sub] || 0);
-        total += val;
-        if (val < 40) allPass = false;
-      });
-      const percentage = (total / (SUBJECTS.length * 100)) * 100;
-      return { total, percentage: percentage.toFixed(1), isPass: allPass, grade: calculateGrade(percentage) };
-    }
-
-    // 11. Faculty Roster Rendering
-    function renderFacultyRoster() {
-      const tbody = document.getElementById('faculty-roster-tbody');
-      if (!tbody) return;
-      const rolls = Object.keys(currentStudents);
-      const countEl = document.getElementById('record-count');
-      if (countEl) countEl.textContent = `${rolls.length} students`;
-      tbody.innerHTML = '';
-
-      rolls.forEach(roll => {
-        const s = currentStudents[roll];
-        const stats = computeStats(s.marks || {});
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50";
-        tr.innerHTML = `
-          <td class="p-3 font-mono font-bold">${s.roll}</td>
-          <td class="p-3 font-semibold">${s.name}</td>
-          <td class="p-3 text-slate-500">${s.class}</td>
-          <td class="p-3 font-semibold">${stats.total} / 600</td>
-          <td class="p-3 font-bold text-blue-900">${stats.percentage}%</td>
-          <td class="p-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${stats.isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-              ${stats.isPass ? 'PASS' : 'FAIL'}
-            </span>
-          </td>
-          <td class="p-3 text-right space-x-2">
-            <button onclick="editStudent('${s.roll}')" class="text-blue-600 hover:text-blue-800 font-semibold" title="Edit Student">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            <button onclick="deleteStudentCloud('${s.roll}')" class="text-rose-600 hover:text-rose-800 font-semibold" title="Delete Student">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-  </script>
-</body>
-</html>
+    // --- POPULATE SCREEN RESULT ---
+    fun
